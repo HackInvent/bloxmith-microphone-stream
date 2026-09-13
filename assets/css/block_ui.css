@@ -1,0 +1,117 @@
+.microphone-stream-node-card .node-owned-card-preview,
+.cw-microphone-stream-modal .inspector-copy,
+.cw-microphone-stream-inspector .inspector-copy {
+  overflow-wrap: anywhere;
+}
+
+.microphone-stream-card-controls {
+  align-items: center;
+  display: flex;
+  gap: 7px;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.microphone-stream-card-controls span {
+  color: rgba(15, 23, 42, 0.55);
+  font-size: 10px;
+  max-width: 105px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.microphone-stream-toggle {
+  appearance: none;
+  background: rgba(8, 145, 178, 0.1);
+  border: 1px solid rgba(8, 145, 178, 0.32);
+  border-radius: 999px;
+  color: #0e7490;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 10px;
+}
+
+.microphone-stream-toggle.is-streaming {
+  background: #dc2626;
+  border-color: #dc2626;
+  color: #fff;
+}
+
+.microphone-stream-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+  overflow: auto;
+  padding: 14px;
+}
+
+.microphone-stream-section,
+.microphone-stream-capture {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+.microphone-stream-capture {
+  grid-template-columns: minmax(150px, auto) minmax(100px, auto) 1fr;
+  align-items: center;
+  padding: 14px;
+  border: 1px solid rgba(8, 145, 178, 0.2);
+  border-radius: 14px;
+  background: rgba(236, 254, 255, 0.7);
+}
+
+.microphone-stream-status {
+  margin: 0;
+  min-height: 20px;
+}
+
+.cw-microphone-stream-modal .inspector-copy { margin: 0; }
+.cw-microphone-stream-modal .field-group :is(input, select) { width: 100%; min-width: 0; }
+.cw-microphone-stream-modal .block-modal-error-tabs,
+.cw-microphone-stream-modal .block-modal-error-panel { padding-inline: 0; background: transparent; }
+
+.cw-microphone-stream-modal .field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.microphone-stream-footer {
+  justify-content: flex-end;
+  padding: 12px 14px;
+  border-top: 1px solid rgba(15, 23, 42, 0.1);
+}
+
+@media (max-width: 760px) {
+  .microphone-stream-capture,
+  .cw-microphone-stream-modal .field-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.cw-microphone-stream-modal.modal-panel {
+  display: flex;
+  flex-direction: column;
+  width: min(760px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  background: var(--panel, #fff);
+  color: var(--ink, #252b36);
+  margin-inline: auto;
+}
+
+.cw-microphone-stream-modal > .modal-header,
+.cw-microphone-stream-modal > .microphone-stream-footer {
+  flex: 0 0 auto;
+}
+
+.cw-microphone-stream-modal .modal-header h2 { overflow-wrap: anywhere; }
+.cw-microphone-stream-modal .modal-header > div { min-width: 0; }
+.cw-microphone-stream-modal .modal-header .modal-actions { flex-shrink: 0; }
+.cw-microphone-stream-modal button:disabled,
+.microphone-stream-toggle:disabled { opacity: .55; cursor: not-allowed; }
+.cw-microphone-stream-modal :is(button, input, select):focus-visible,
+.microphone-stream-toggle:focus-visible { outline: 2px solid var(--accent-strong, #0891b2); outline-offset: 3px; }

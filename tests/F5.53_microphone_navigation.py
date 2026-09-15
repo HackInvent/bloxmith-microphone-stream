@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from urllib.parse import unquote
 import sys
 
 ROOT_DIR = Path(__file__).resolve().parents[3]
@@ -14,6 +15,7 @@ from blocs.save_audio.block import SaveAudioBlock
 from blocs.composite.block import CompositeBlock
 from ui_smoke_common import create_project_api, graph_payload, http_json, isolated_server, project_editor_url, wait_for_run_predicate
 from block_test_artifacts import artifact_path
+from block_test_packages import install_test_package, surface_payload
 
 
 def pair(prefix: str) -> tuple[list[dict], list[dict]]:
@@ -23,15 +25,21 @@ def pair(prefix: str) -> tuple[list[dict], list[dict]]:
         SaveAudioBlock().build_node_payload(node_id=f"{prefix}-save", position={"x": 430, "y": 130},
                                            config_overrides={"output_dir": "exports/micro-navigation"}),
     ]
+    nodes[0]["block_version"] = MicrophoneStreamBlock().model["version"]
     edges = [{"id": f"{prefix}-{port}", "kind": "data", "from": {"node": f"{prefix}-mic", "port": port},
               "to": {"node": f"{prefix}-save", "port": port}} for port in (1, 2)]
     return nodes, edges
 
 
-def test_navigation(page, server) -> None:
+def test_navigation(page, server, *, origin="managed") -> None:
     """Exercise real editor, permission, encoder, WS and Save Audio, without paid providers."""
+    model = install_test_package(server, "microphone_stream", origin=origin, variant=origin == "linked")
     nodes, edges = pair("root")
+    for surface in ("modal", "node_card", "inspector_panel"):
+        surface_payload(server, model, nodes[0], surface)
     inner_nodes, inner_edges = pair("inner")
+    if origin == "linked":
+        inner_nodes[0]["block_version"] = "0.0.0"  # Synthetic second release, never published.
     composite = CompositeBlock().build_node_payload(node_id="composite-test", position={"x": 790, "y": 130})
     composite["inputs"], composite["outputs"] = [], []
     composite["config"]["composite"] = {"nodes": inner_nodes, "edges": inner_edges, "input_mappings": [], "output_mappings": []}
@@ -40,7 +48,7 @@ def test_navigation(page, server) -> None:
     graph_id = created.get("graph_id") or created["project_id"]
     commands = []
     page.on("request", lambda request: commands.append(request.post_data_json)
-            if request.url.endswith("/microphone_stream/ui-action")
+            if "/microphone_stream@" in unquote(request.url) and request.url.endswith("/ui-action")
             and request.post_data_json.get("action") == "publish_capture_command" else None)
     page.add_init_script("""(() => {
       window.micTest = {streams: [], recorders: [], frames: 0};
@@ -101,6 +109,8 @@ def test_navigation(page, server) -> None:
     card().click()
     recording()
     first_stream = commands[-1]["values"]["stream_id"]
+    assert commands[-1]["node"]["block_version"] == model["version"]
+    assert commands[-1]["kind"] == f'microphone_stream@{model["version"]}'
     for _ in range(3):
         frames_before = page.evaluate("window.micTest.frames")
         enter()
@@ -112,7 +122,7 @@ def test_navigation(page, server) -> None:
     modal = open_modal()
     assert modal.locator('[data-microphone-stream-start]').is_disabled(), "No second capture from the modal."
     assert modal.locator('[data-microphone-stream-stop]').is_enabled()
-    page.screenshot(path=artifact_path("microphone-navigation-active.png"))
+    page.screenshot(path=artifact_path(f"microphone-{origin}-navigation-active.png"))
     modal.locator('[data-close-block-modal]').click()
     recording()
     assert page.evaluate("window.micTest.recorders.length") == 1
@@ -221,21 +231,26 @@ def test_navigation(page, server) -> None:
             apply: apply.bottom <= innerHeight, close: close.top >= 0,
             overflow: panel.scrollWidth > panel.clientWidth + 1};
         }""")
-        page.screenshot(path=artifact_path(f"microphone-navigation-{label}.png"))
+        page.screenshot(path=artifact_path(f"microphone-{origin}-navigation-{label}.png"))
         assert bounds["inside"] and bounds["apply"] and bounds["close"] and not bounds["overflow"], (label, bounds)
     run = http_json(server.base_url, f"/api/runs/{run_id}")
     assert run.get("status") == "cancelled"
     assert len([command for command in commands if command["values"]["action"] == "start"]) == 6
+    for command in commands:
+        expected_version = "0.0.0" if origin == "linked" and command["node"]["id"] == "inner-mic" else model["version"]
+        assert command["node"]["block_version"] == expected_version
+        assert command["kind"] == f"microphone_stream@{expected_version}"
+    assert page.evaluate("!window.CWMicrophoneStream && !window.CWBlockUiBlocks?.microphone_streamNodeCard")
     print("[ok] Real microphone → WS → Save Audio: navigation, shared controls, final counts, hidden Run Stop and responsive modal")
 
 
-def main() -> None:
+def main(*, origin="managed") -> None:
     """Use a deterministic fake microphone device, with real Chromium capture and runtime IO."""
     with isolated_server() as server, sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=True, args=["--use-fake-device-for-media-stream", "--use-fake-ui-for-media-stream"])
         try:
             context = browser.new_context(permissions=["microphone"], viewport={"width": 1440, "height": 900})
-            test_navigation(context.new_page(), server)
+            test_navigation(context.new_page(), server, origin=origin)
         finally:
             browser.close()
 

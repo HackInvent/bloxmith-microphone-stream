@@ -18,7 +18,6 @@ from bloxsmith_app.block_api import (
     BlockRuntimePreparation,
     BlockRuntimePreparationContext,
     BlockRuntimeResult,
-    RuntimeAudioStreamClient,
     TEXT_PLAIN,
     render_inspector_template,
     render_node_card_template,
@@ -50,30 +49,6 @@ class MicrophoneStreamBlock(BlockDefinition):
 
     kind = "microphone_stream"
 
-    def ui_assets(self, surface: str = "modal") -> list[dict[str, str]]:
-        """Return block-owned assets for the requested UI surface.
-
-        Args:
-            surface: Modal, inspector, or node-card surface name.
-        """
-
-        if surface == "modal":
-            return [
-                {"kind": "css", "path": "assets/css/block_ui.css"},
-                {"kind": "js", "path": "assets/js/stream_capture.js"},
-                {"kind": "js", "path": "assets/js/common.js"},
-                {"kind": "js", "path": "assets/js/block_modal.js"},
-            ]
-        if surface == "inspector_panel":
-            return [{"kind": "css", "path": "assets/css/block_ui.css"}]
-        if surface == "node_card":
-            return [
-                {"kind": "css", "path": "assets/css/block_ui.css"},
-                {"kind": "js", "path": "assets/js/stream_capture.js"},
-                {"kind": "js", "path": "assets/js/common.js"},
-                {"kind": "js", "path": "assets/js/node_card.js"},
-            ]
-        return []
 
     def render_node_card(
         self,
@@ -98,7 +73,7 @@ class MicrophoneStreamBlock(BlockDefinition):
                 "profile": f"{config['channel_count']} canal · {config['audio_bits_per_second'] // 1000} kb/s",
             },
         )
-        rendered.setdefault("context", {})["capture_node"] = {"id": node.get("id"), "outputs": node.get("outputs", [])}
+        rendered.setdefault("context", {})["capture_node"] = {"id": node.get("id"), "block_version": self.model["version"], "outputs": node.get("outputs", [])}
         return rendered
 
     def render_inspector_panel(
@@ -139,7 +114,7 @@ class MicrophoneStreamBlock(BlockDefinition):
         return {
             "html": html,
             "context": {"node_id": str(node.get("id") or ""), "node_kind": self.kind, **config,
-                        "capture_node": {"id": node.get("id"), "outputs": node.get("outputs", [])}},
+                        "capture_node": {"id": node.get("id"), "block_version": self.model["version"], "outputs": node.get("outputs", [])}},
         }
 
     def handle_ui_action(
@@ -237,7 +212,9 @@ class MicrophoneStreamBlock(BlockDefinition):
             )
 
         client = context.services.get("runtime_audio_streams")
-        connected = isinstance(client, RuntimeAudioStreamClient) and client.available
+        # Managed releases receive a service proxy, not the native concrete class.
+        # Availability is part of the public audio interface in both host modes.
+        connected = bool(getattr(client, "available", False))
         if not connected:
             message = "Le port audio_out n'est pas relié à une entrée audio compatible."
             return BlockRuntimeResult(

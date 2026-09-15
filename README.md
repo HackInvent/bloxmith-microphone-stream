@@ -1,7 +1,7 @@
 # Microphone Stream
 
 <!-- block-metadata:start -->
-[![Block version: 0.1.0](https://img.shields.io/badge/block-0.1.0-blue)](model.json)
+[![Block version: 0.1.1](https://img.shields.io/badge/block-0.1.1-blue)](model.json)
 [![BloxSmith compatibility: 1.0.9](https://img.shields.io/badge/BloxSmith-1.0.9-brightgreen)](compatibility.json)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 
@@ -59,6 +59,28 @@ This format is shared with **OpenAI TTS Stream** (Opus/Ogg). Either source can f
 
 ## Lifecycle and limits
 
+### Release UI contract (0.1.1)
+
+`model.json.ui_assets` declares every modal, inspector and card asset, including
+the shared relative imports. Surface entrypoints are ES modules; no block UI or
+capture helper is registered on an unversioned browser global. CSS selectors
+are scoped to `microphone_stream@0.1.1`.
+
+The shared module keeps capture sessions separate by release, blueprint instance,
+Run and node. Card/modal teardown removes only UI subscriptions. Start/stop
+commands keep the originating node **and release version**, even after another
+modal or composite becomes visible. Capture and audio/data protocols are unchanged.
+
+Runtime readiness reads the public audio service's `available` property, not its
+concrete Python class: the same check accepts a native client or the supervised
+package host's service proxy. A disconnected port still reports capture unavailable.
+The linked navigation suite also places a synthetic second release inside the
+same blueprint's composite and checks version-specific command routing.
+
+Use an explicitly versioned installed or linked package. Existing `0.1.0` releases
+and blueprint references are not rewritten; install/reload and explicitly upgrade
+the node version. There is no legacy unversioned UI fallback.
+
 - Active Runtime capture is UI-driven, without Play. One capture is shared by the card and properties for a given block, Run and browser.
 - Entering/leaving a composite, refreshing a card or closing properties **does not stop the microphone**. MediaRecorder, WebSocket and `stream_id` remain the same. Returning controls show actual capture state and can stop it; opening properties does not start another microphone. This also applies to a microphone inside a composite.
 - Simulation returns `skipped`, without microphone access or publication.
@@ -77,10 +99,10 @@ python3 -B tests/run_tests.py microphone_stream
 
 Captures go to ignored results without personal paths. The suites cover both modes, commands, WebM/Opus and Ogg/Opus selection, AAC-only browser rejection, device-independent Opus clock and cleanup.
 
-`F5.53_microphone_navigation.py` uses real Chromium, MediaRecorder, the bridge and Save Audio with a synthetic microphone. It tests composite navigation, capture inside composites, shared card/modal controls, saved counts, off-screen duration limits, cancelled late permission, new Runs, page exit and stopping a Run while the microphone is out of view. Properties are checked on desktop and narrow screens. The TTS suite covers all six shared-format source/consumer connections.
+`F5.53_microphone_navigation.py` installs the current package and uses real Chromium, MediaRecorder, the bridge and Save Audio with a synthetic microphone. It tests composite navigation, capture inside composites, shared card/modal controls, saved counts, off-screen duration limits, cancelled late permission, new Runs, page exit and stopping a Run while the microphone is out of view. Properties are checked on desktop and narrow screens. `F5.54_microphone_linked_navigation.py` repeats the same assertions using a linked package. `F5.44` also exercises the installed package in both runtime modes and imports the actual capture ES module for deterministic lifecycle checks. The TTS suite covers all six shared-format source/consumer connections.
 
 ## Compatibility policy
 
-[compatibility.json](compatibility.json) records HackInvent's verified BloxSmith versions and test evidence. Only the versions listed above have been verified, using the block-owned suites in a **bundled-block test installation**. This is not a certification of managed-package installation, every browser/OS, or live provider availability. Other framework versions are unverified, not necessarily incompatible.
+[compatibility.json](compatibility.json) records HackInvent's verified BloxSmith versions and test evidence. The outer harness is a **bundled-block test installation**; the release-specific suites described above additionally install and link this package through the real framework. Evidence covers those explicit cases, not every distribution format, browser/OS or live provider. Other framework versions are unverified, not necessarily incompatible.
 
 The block-version badge follows `model.json`, not a published Git tag. `unversioned` means that no block release version is declared; no number is inferred from the framework version. The framework still uses `model.json` for its runtime/install contract; the tester-owned JSON does not replace it. Official integration tests run in the private `bloxmith-blocs` workspace. Test helpers and the proprietary framework are not bundled in this public block repository.

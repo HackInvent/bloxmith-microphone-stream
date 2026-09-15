@@ -1,10 +1,10 @@
-.microphone-stream-node-card .node-owned-card-preview,
-.cw-microphone-stream-modal .inspector-copy,
-.cw-microphone-stream-inspector .inspector-copy {
+[data-block-release="microphone_stream@0.1.1"] .microphone-stream-node-card .node-owned-card-preview,
+[data-block-release="microphone_stream@0.1.1"] .cw-microphone-stream-modal .inspector-copy,
+[data-block-release="microphone_stream@0.1.1"] .cw-microphone-stream-inspector .inspector-copy {
   overflow-wrap: anywhere;
 }
 
-.microphone-stream-card-controls {
+[data-block-release="microphone_stream@0.1.1"] .microphone-stream-card-controls {
   align-items: center;
   display: flex;
   gap: 7px;
@@ -12,7 +12,7 @@
   margin-top: 8px;
 }
 
-.microphone-stream-card-controls span {
+[data-block-release="microphone_stream@0.1.1"] .microphone-stream-card-controls span {
   color: rgba(15, 23, 42, 0.55);
   font-size: 10px;
   max-width: 105px;
@@ -21,7 +21,7 @@
   white-space: nowrap;
 }
 
-.microphone-stream-toggle {
+[data-block-release="microphone_stream@0.1.1"] .microphone-stream-toggle {
   appearance: none;
   background: rgba(8, 145, 178, 0.1);
   border: 1px solid rgba(8, 145, 178, 0.32);
@@ -33,13 +33,13 @@
   padding: 6px 10px;
 }
 
-.microphone-stream-toggle.is-streaming {
+[data-block-release="microphone_stream@0.1.1"] .microphone-stream-toggle.is-streaming {
   background: #dc2626;
   border-color: #dc2626;
   color: #fff;
 }
 
-.microphone-stream-modal-body {
+[data-block-release="microphone_stream@0.1.1"] .microphone-stream-modal-body {
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -48,15 +48,15 @@
   padding: 14px;
 }
 
-.microphone-stream-section,
-.microphone-stream-capture {
+[data-block-release="microphone_stream@0.1.1"] .microphone-stream-section,
+[data-block-release="microphone_stream@0.1.1"] .microphone-stream-capture {
   display: grid;
   gap: 10px;
   min-width: 0;
   flex-shrink: 0;
 }
 
-.microphone-stream-capture {
+[data-block-release="microphone_stream@0.1.1"] .microphone-stream-capture {
   grid-template-columns: minmax(150px, auto) minmax(100px, auto) 1fr;
   align-items: center;
   padding: 14px;
@@ -65,35 +65,35 @@
   background: rgba(236, 254, 255, 0.7);
 }
 
-.microphone-stream-status {
+[data-block-release="microphone_stream@0.1.1"] .microphone-stream-status {
   margin: 0;
   min-height: 20px;
 }
 
-.cw-microphone-stream-modal .inspector-copy { margin: 0; }
-.cw-microphone-stream-modal .field-group :is(input, select) { width: 100%; min-width: 0; }
-.cw-microphone-stream-modal .block-modal-error-tabs,
-.cw-microphone-stream-modal .block-modal-error-panel { padding-inline: 0; background: transparent; }
+[data-block-release="microphone_stream@0.1.1"] .cw-microphone-stream-modal .inspector-copy { margin: 0; }
+[data-block-release="microphone_stream@0.1.1"] .cw-microphone-stream-modal .field-group :is(input, select) { width: 100%; min-width: 0; }
+[data-block-release="microphone_stream@0.1.1"] .cw-microphone-stream-modal .block-modal-error-tabs,
+[data-block-release="microphone_stream@0.1.1"] .cw-microphone-stream-modal .block-modal-error-panel { padding-inline: 0; background: transparent; }
 
-.cw-microphone-stream-modal .field-grid {
+[data-block-release="microphone_stream@0.1.1"] .cw-microphone-stream-modal .field-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
 }
 
-.microphone-stream-footer {
+[data-block-release="microphone_stream@0.1.1"] .microphone-stream-footer {
   justify-content: flex-end;
   padding: 12px 14px;
   border-top: 1px solid rgba(15, 23, 42, 0.1);
 }
 
 @media (max-width: 760px) {
-  .microphone-stream-capture,
-  .cw-microphone-stream-modal .field-grid {
+  [data-block-release="microphone_stream@0.1.1"] .microphone-stream-capture,
+  [data-block-release="microphone_stream@0.1.1"] .cw-microphone-stream-modal .field-grid {
     grid-template-columns: 1fr;
   }
 }
-.cw-microphone-stream-modal.modal-panel {
+[data-block-release="microphone_stream@0.1.1"] .cw-microphone-stream-modal.modal-panel {
   display: flex;
   flex-direction: column;
   width: min(760px, calc(100vw - 32px));
@@ -103,15 +103,15 @@
   margin-inline: auto;
 }
 
-.cw-microphone-stream-modal > .modal-header,
-.cw-microphone-stream-modal > .microphone-stream-footer {
+[data-block-release="microphone_stream@0.1.1"] .cw-microphone-stream-modal > .modal-header,
+[data-block-release="microphone_stream@0.1.1"] .cw-microphone-stream-modal > .microphone-stream-footer {
   flex: 0 0 auto;
 }
 
-.cw-microphone-stream-modal .modal-header h2 { overflow-wrap: anywhere; }
-.cw-microphone-stream-modal .modal-header > div { min-width: 0; }
-.cw-microphone-stream-modal .modal-header .modal-actions { flex-shrink: 0; }
-.cw-microphone-stream-modal button:disabled,
-.microphone-stream-toggle:disabled { opacity: .55; cursor: not-allowed; }
-.cw-microphone-stream-modal :is(button, input, select):focus-visible,
-.microphone-stream-toggle:focus-visible { outline: 2px solid var(--accent-strong, #0891b2); outline-offset: 3px; }
+[data-block-release="microphone_stream@0.1.1"] .cw-microphone-stream-modal .modal-header h2 { overflow-wrap: anywhere; }
+[data-block-release="microphone_stream@0.1.1"] .cw-microphone-stream-modal .modal-header > div { min-width: 0; }
+[data-block-release="microphone_stream@0.1.1"] .cw-microphone-stream-modal .modal-header .modal-actions { flex-shrink: 0; }
+[data-block-release="microphone_stream@0.1.1"] .cw-microphone-stream-modal button:disabled,
+[data-block-release="microphone_stream@0.1.1"] .microphone-stream-toggle:disabled { opacity: .55; cursor: not-allowed; }
+[data-block-release="microphone_stream@0.1.1"] .cw-microphone-stream-modal :is(button, input, select):focus-visible,
+[data-block-release="microphone_stream@0.1.1"] .microphone-stream-toggle:focus-visible { outline: 2px solid var(--accent-strong, #0891b2); outline-offset: 3px; }

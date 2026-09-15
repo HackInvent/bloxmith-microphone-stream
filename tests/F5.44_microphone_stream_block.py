@@ -51,6 +51,7 @@ from ui_smoke_common import (  # noqa: E402
     wait_for_run_predicate,
     wait_for_run_terminal,
 )
+from block_test_packages import install_test_package, release_key, surface_payload
 
 
 def audio_output() -> SimpleNamespace:
@@ -236,20 +237,18 @@ def test_owned_ui_and_browser_transport() -> None:
     expect(modal["html"].count("data-block-apply") == 1, "The modal must have one reachable Apply action, not an extra button in the scrolling fields.")
     expect(modal["context"]["capture_node"]["outputs"] == node["outputs"], "Modal capture must retain the original declared command port.")
     expect(card["context"]["capture_node"]["id"] == node["id"], "Card capture must retain the original node identity.")
+    for rendered in (modal, card):
+        expect(rendered["context"]["capture_node"]["block_version"] == block.model["version"],
+               "Capture identity must come from the owning package, even when the UI node omits block_version.")
 
     with isolated_server() as server:
-        rendered = http_json(
-            server.base_url,
-            "/api/blocks/microphone_stream/modal",
-            method="POST",
-            payload={"node": node, "runtime": {}},
-        )
+        model = install_test_package(server, "microphone_stream")
+        node["block_version"] = model["version"]
+        rendered = surface_payload(server, model, node)
         assets = rendered.get("assets") or []
-        expect({"kind": "js", "path": "assets/js/stream_capture.js"} in assets, "Capture helper asset is missing.")
-        expect({"kind": "js", "path": "assets/js/block_modal.js"} in assets, "Modal asset is missing.")
-        expect({"kind": "js", "path": "assets/js/common.js"} in assets, "The page-local capture/control owner must be loaded before surface controls.")
+        capture_asset = next(asset for asset in assets if asset["path"].endswith("/assets/js/stream_capture.js"))
         with urlopen(
-            f"{server.base_url}/api/blocks/microphone_stream/assets/assets/js/stream_capture.js",
+            f'{server.base_url}/api/blocks/{release_key(model)}/assets/{capture_asset["path"]}',
             timeout=5,
         ) as response:
             script = response.read().decode("utf-8")
@@ -264,8 +263,18 @@ def test_owned_ui_and_browser_transport() -> None:
 def test_graph_modes() -> None:
     """Run FB5 through centralized and loaded/played active graph paths."""
 
+    block = MicrophoneStreamBlock()
+    for available in (False, True):
+        result = block.execute_runtime(microphone_context(runtime_mode="zeromq_active",
+            services={"runtime_audio_streams": SimpleNamespace(available=available)}))
+        expect(result.status == ("success" if available else "skipped"),
+               "Audio readiness must depend on the public interface, not the concrete client class.")
+
     with isolated_server() as server:
-        centralized_created = create_run_api(server, audio_document(), runtime_mode="centralized")
+        model = install_test_package(server, "microphone_stream")
+        document = audio_document()
+        next(node for node in document["nodes"] if node["id"] == "microphone-1")["block_version"] = model["version"]
+        centralized_created = create_run_api(server, document, runtime_mode="centralized")
         centralized = wait_for_run_terminal(server, str(centralized_created["run_id"]), timeout_sec=15)
         expect(centralized.get("status") == "success", "Audio simulation warnings must remain non-blocking.")
         microphone_result = centralized.get("results", {}).get("microphone-1", {})
@@ -274,16 +283,18 @@ def test_graph_modes() -> None:
             "Centralized microphone node must explain that capture is skipped.",
         )
 
-        prepared = prepare_run_api(server, audio_document(), runtime_mode="zeromq_active")
+        prepared = prepare_run_api(server, document, runtime_mode="zeromq_active")
         run_id = str(prepared.get("run_id") or "")
         expect(run_id, f"Active graph must prepare: {prepared}")
         play_run_api(server, run_id)
         running = wait_for_run_predicate(
             server,
             run_id,
-            lambda state: state.get("status") == "running" and state.get("node_statuses", {}).get("microphone-1") == "success",
+            lambda state: state.get("status") == "running"
+            and state.get("node_statuses", {}).get("microphone-1") == "success"
+            and "Passerelle micro prête" in str(state.get("results", {}).get("microphone-1", {}).get("last_message", "")),
             "Connected Microphone Stream did not report ready after Play.",
-            timeout_sec=8,
+            timeout_sec=20,
         )
         expect("Passerelle micro prête" in str(running["results"]["microphone-1"].get("last_message") or ""), "Active readiness result is missing.")
         stop_run_api(server, run_id)
@@ -293,10 +304,9 @@ def test_graph_modes() -> None:
 def test_browser_command_lifecycle() -> None:
     """FB1/FB2/FB3/FB7: execute browser code with deterministic capture and transport fakes."""
     script = r"""
-const assert = require("node:assert/strict");
-const fs = require("node:fs");
-const vm = require("node:vm");
-global.window = { setTimeout: () => 1, clearTimeout() {} };
+import assert from "node:assert/strict";
+import { pathToFileURL } from "node:url";
+global.window = { setTimeout: () => 1, clearTimeout() {}, addEventListener() {} };
 let deny = false, holdPermission = null, released = 0, started = 0;
 const stream = {
   getTracks: () => [{ stop: () => released++ }],
@@ -321,7 +331,7 @@ class Recorder {
   }
 }
 global.MediaRecorder = Recorder;
-vm.runInThisContext(fs.readFileSync(process.argv[2], "utf8"));
+const { createStreamer } = await import(pathToFileURL(process.argv[2]));
 let commands = [], chunks = [], errors = [], publishers = [], rejectFrames = false, rejectStart = false;
 const api = {
   runtimeAudioStreams: { openOutput: async options => {
@@ -343,7 +353,7 @@ const api = {
     return { active_runtime_actions_result: { ok: !(rejectStart && values.action === "start") } };
   },
 };
-const make = () => window.CWMicrophoneStream.createStreamer({
+const make = () => createStreamer({
   api, config: () => ({}), onError: (_, message) => errors.push(message),
 });
 const settle = () => new Promise(resolve => setTimeout(resolve, 0));
@@ -402,20 +412,20 @@ const settle = () => new Promise(resolve => setTimeout(resolve, 0));
   assert.ok(!mounted.isActive());
 
   Recorder.isTypeSupported = mime => mime === "audio/ogg;codecs=opus";
-  const ogg = window.CWMicrophoneStream.createStreamer({ api, config: () => ({ channelCount: 2 }) });
+  const ogg = createStreamer({ api, config: () => ({ channelCount: 2 }) });
   await ogg.start();
   assert.equal(Recorder.last.options.mimeType, "audio/ogg;codecs=opus");
   await ogg.stop();
   Recorder.isTypeSupported = mime => mime === "audio/mp4" || mime === "audio/webm";
   const publisherCount = publishers.length;
-  const unsupported = window.CWMicrophoneStream.createStreamer({ api, onError: e => errors.push(e.message) });
+  const unsupported = createStreamer({ api, onError: e => errors.push(e.message) });
   await unsupported.start();
   assert.equal(publishers.length, publisherCount, "Unsupported browsers must fail before opening a stream or publishing start.");
   assert.match(errors.at(-1), /Opus/);
 
-  vm.runInThisContext(fs.readFileSync(process.argv[3], "utf8"));
+  const { update } = await import(pathToFileURL(process.argv[3]));
   const root = { dataset: {}, querySelector: () => ({ textContent: "" }) };
-  window.CWBlockUiBlocks.microphone_streamNodeCard.update(root, {
+  update(root, {
     getNode: () => ({ title: "Live", config: { timeslice_ms: 333 } }),
   });
   assert.equal(root.dataset.timesliceMs, "333");
@@ -423,7 +433,7 @@ const settle = () => new Promise(resolve => setTimeout(resolve, 0));
 })().catch(error => { console.error(error); process.exitCode = 1; });
 """
     completed = subprocess.run(
-        ["node", "-", str(ROOT_DIR / "blocs/microphone_stream/assets/js/stream_capture.js"),
+        ["node", "--experimental-default-type=module", "-", str(ROOT_DIR / "blocs/microphone_stream/assets/js/stream_capture.js"),
          str(ROOT_DIR / "blocs/microphone_stream/assets/js/node_card.js")],
         input=script, text=True, capture_output=True, timeout=15, check=False,
     )

@@ -118,7 +118,7 @@ def test_navigation(page, server, *, origin="managed") -> None:
         assert page.evaluate("window.micTest.streams[0].getTracks().every(track => track.readyState === 'live')")
         assert len(commands) == 1, "Navigation must not publish stop/start or change stream_id."
         leave()
-        assert card().inner_text() == "Arrêter"
+        assert card().inner_text() == "Stop"
     modal = open_modal()
     assert modal.locator('[data-microphone-stream-start]').is_disabled(), "No second capture from the modal."
     assert modal.locator('[data-microphone-stream-stop]').is_enabled()
@@ -160,7 +160,7 @@ def test_navigation(page, server, *, origin="managed") -> None:
     frames_before = page.evaluate("window.micTest.frames")
     page.wait_for_function("before => window.micTest.frames >= before + 3", arg=frames_before)
     enter()
-    assert card("inner-mic").inner_text() == "Arrêter"
+    assert card("inner-mic").inner_text() == "Stop"
     card("inner-mic").focus()
     page.keyboard.press("Space")
     saved("inner-save", third_stream)
@@ -176,7 +176,7 @@ def test_navigation(page, server, *, origin="managed") -> None:
     enter()
     saved("root-save", timed_stream)
     leave()
-    page.wait_for_function("document.querySelector('.canvas-node[data-node-id=\"root-mic\"] [data-microphone-stream-toggle]')?.textContent === 'Démarrer'")
+    page.wait_for_function("document.querySelector('.canvas-node[data-node-id=\"root-mic\"] [data-microphone-stream-toggle]')?.textContent === 'Start'")
 
     # An outstanding permission prompt survives navigation, but never resurrects a stopped Run.
     page.evaluate("window.micTest.holdPermission = true")
@@ -204,7 +204,7 @@ def test_navigation(page, server, *, origin="managed") -> None:
     recording()
     page.evaluate("window.dispatchEvent(new PageTransitionEvent('pagehide', {persisted: true}))")
     page.wait_for_function("window.micTest.streams.every(stream => stream.getTracks().every(track => track.readyState === 'ended'))")
-    page.wait_for_function("document.querySelector('.canvas-node[data-node-id=\"root-mic\"] [data-microphone-stream-toggle]')?.textContent === 'Démarrer'")
+    page.wait_for_function("document.querySelector('.canvas-node[data-node-id=\"root-mic\"] [data-microphone-stream-toggle]')?.textContent === 'Start'")
     page.evaluate("window.dispatchEvent(new PageTransitionEvent('pageshow', {persisted: true}))")
     assert page.evaluate("window.micTest.recorders.every(recorder => recorder.state === 'inactive')")
 
@@ -216,7 +216,7 @@ def test_navigation(page, server, *, origin="managed") -> None:
     page.wait_for_function("window.micTest.streams.every(stream => stream.getTracks().every(track => track.readyState === 'ended'))")
     leave()
     page.wait_for_function("document.querySelector('.canvas-node[data-node-id=\"root-mic\"] [data-microphone-stream-toggle]')?.disabled")
-    assert card().inner_text() == "Démarrer"
+    assert card().inner_text() == "Start"
     assert card().is_disabled()
 
     modal = open_modal()

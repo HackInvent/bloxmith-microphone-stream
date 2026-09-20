@@ -177,7 +177,7 @@ def test_model_preparation_and_direct_execution() -> None:
         expect(active_preparation.keep_alive, "Active browser ingress must remain alive until Stop.")
         active = block.execute_runtime(active_context)
         expect(active.status == "success", "A connected active audio_out must report ready.")
-        expect("Passerelle micro prête" in active.last_message, "Readiness must be actionable in the UI.")
+        expect("Microphone gateway ready" in active.last_message, "Readiness must be actionable in the UI.")
     finally:
         service.close()
 
@@ -257,7 +257,7 @@ def test_owned_ui_and_browser_transport() -> None:
         expect("runtimeAudioStreams.openOutput" in script, "Capture must use the injected generic facade.")
         expect("sendFrame(event.data)" in script, "Each MediaRecorder chunk must be published as binary.")
         expect("/api/" not in script and "new WebSocket" not in script, "The block must not construct framework transport URLs.")
-        expect("saturé" in script and "arrêtée" in script, "Backpressure must stop capture explicitly.")
+        expect("saturated" in script and "stopped" in script, "Backpressure must stop capture explicitly.")
 
 
 def test_graph_modes() -> None:
@@ -279,7 +279,7 @@ def test_graph_modes() -> None:
         expect(centralized.get("status") == "success", "Audio simulation warnings must remain non-blocking.")
         microphone_result = centralized.get("results", {}).get("microphone-1", {})
         expect(
-            "uniquement en Active Runtime" in str(microphone_result.get("last_message") or ""),
+            "only available in Active Runtime" in str(microphone_result.get("last_message") or ""),
             "Centralized microphone node must explain that capture is skipped.",
         )
 
@@ -292,11 +292,11 @@ def test_graph_modes() -> None:
             run_id,
             lambda state: state.get("status") == "running"
             and state.get("node_statuses", {}).get("microphone-1") == "success"
-            and "Passerelle micro prête" in str(state.get("results", {}).get("microphone-1", {}).get("last_message", "")),
+            and "Microphone gateway ready" in str(state.get("results", {}).get("microphone-1", {}).get("last_message", "")),
             "Connected Microphone Stream did not report ready after Play.",
             timeout_sec=20,
         )
-        expect("Passerelle micro prête" in str(running["results"]["microphone-1"].get("last_message") or ""), "Active readiness result is missing.")
+        expect("Microphone gateway ready" in str(running["results"]["microphone-1"].get("last_message") or ""), "Active readiness result is missing.")
         stop_run_api(server, run_id)
 
 
@@ -381,7 +381,7 @@ const settle = () => new Promise(resolve => setTimeout(resolve, 0));
   await settle();
   assert.equal(commands.at(-1).aborted, true);
   assert.equal(commands.at(-1).frame_count, 0);
-  assert.ok(errors.some(message => message.includes("saturé")));
+  assert.ok(errors.some(message => message.includes("saturated")));
   assert.ok(!capture.isActive());
   rejectFrames = false;
 

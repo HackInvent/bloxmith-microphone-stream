@@ -6,14 +6,14 @@
       <span class="inspector-node-tag">{{ node_tag }}</span>
     </div>
     <div class="inspector-tabs">
-      <button class="inspector-tab {{ general_active }}" data-inspector-tab="general" type="button">Général</button>
+      <button class="inspector-tab {{ general_active }}" data-inspector-tab="general" type="button">General</button>
       <button class="inspector-tab {{ ports_active }} {{ ports_tab_hidden }}" data-inspector-tab="ports" type="button" {{ ports_tab_disabled }}>Ports</button>
     </div>
   </div>
 
   <div class="inspector-view {{ general_hidden }}" data-inspector-panel-tab="general">
     <div class="field-group {{ title_hidden }}">
-      <label>Nom du node</label>
+      <label>Node name</label>
       <input data-node-title-input type="text" placeholder="{{ node_title_placeholder }}" value="{{ node_title }}" />
     </div>
     <div class="field-group">
@@ -21,36 +21,36 @@
       <input data-block-config-field="timeslice_ms" data-block-value-type="integer" type="number" min="100" max="2000" step="50" value="{{ timeslice_ms }}" />
     </div>
     <div class="field-group">
-      <label>Débit cible (bits/s)</label>
+      <label>Target bitrate (bits/s)</label>
       <input data-block-config-field="audio_bits_per_second" data-block-value-type="integer" type="number" min="16000" max="320000" step="1000" value="{{ audio_bits_per_second }}" />
     </div>
     <div class="field-group">
       <label>Canaux</label>
       <select data-block-config-field="channel_count" data-block-value-type="integer">
         <option value="1" {{ channel_1_selected }}>Mono</option>
-        <option value="2" {{ channel_2_selected }}>Stéréo</option>
+        <option value="2" {{ channel_2_selected }}>Stereo</option>
       </select>
     </div>
     <div class="field-group">
-      <label>Durée maximale (s)</label>
+      <label>Maximum duration (s)</label>
       <input data-block-config-field="max_duration_sec" data-block-value-type="integer" type="number" min="1" max="86400" step="1" value="{{ max_duration_sec }}" />
     </div>
-    <p class="inspector-copy">Après Run en Active Runtime, démarrez le micro depuis sa carte ou son modal. Reliez audio_out pour le son et command_out pour start/stop. Play n'est pas nécessaire.</p>
-    <div class="inspector-actions"><button class="solid-btn" data-block-apply type="button" disabled>Appliquer</button></div>
+    <p class="inspector-copy">After Run in Active Runtime, start the microphone from its card or its modal. Wire audio_out for the sound and command_out for start/stop. Play is not required.</p>
+    <div class="inspector-actions"><button class="solid-btn" data-block-apply type="button" disabled>Apply</button></div>
   </div>
 
   <div class="inspector-view {{ ports_hidden }}" data-inspector-panel-tab="ports">
     <div class="ports-editor-section">
       <div class="ports-editor-header">
-        <span class="group-label">Entrées</span>
-        <button class="ghost-btn add-port-btn {{ add_input_hidden }}" data-add-input-port type="button" {{ add_input_disabled }}>+ Ajouter une entrée</button>
+        <span class="group-label">Inputs</span>
+        <button class="ghost-btn add-port-btn {{ add_input_hidden }}" data-add-input-port type="button" {{ add_input_disabled }}>+ Add an input</button>
       </div>
       <div class="ports-editor-list">{{ inputs_html }}</div>
     </div>
     <div class="ports-editor-section">
       <div class="ports-editor-header">
-        <span class="group-label">Sorties audio et commandes</span>
-        <button class="ghost-btn add-port-btn {{ add_output_hidden }}" data-add-output-port type="button" {{ add_output_disabled }}>+ Ajouter une sortie</button>
+        <span class="group-label">Audio and command outputs</span>
+        <button class="ghost-btn add-port-btn {{ add_output_hidden }}" data-add-output-port type="button" {{ add_output_disabled }}>+ Add an output</button>
       </div>
       <div class="ports-editor-list">{{ outputs_html }}</div>
     </div>

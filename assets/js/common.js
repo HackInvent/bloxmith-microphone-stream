@@ -29,7 +29,7 @@ function start(api, node, readScope, config) {
   prune();
   if (typeof api.blockRequest !== "function" || typeof window.CWBlockUi?.createRuntimeAudioStreamsApi !== "function") {
     record.active = false;
-    record.message = "Passerelle de capture indisponible. Rechargez la page après la mise à jour du bloc.";
+    record.message = "The capture gateway is unavailable. Reload the page after the block update.";
     notify();
     return;
   }
@@ -47,7 +47,7 @@ function start(api, node, readScope, config) {
     api: {
       runtimeAudioStreams: audio,
       applyAction(action, values) {
-        if (!sameRun()) throw new Error("Le Run de cette capture n’est plus actif.");
+        if (!sameRun()) throw new Error("The Run of this capture is no longer active.");
         // Explicit body bypasses the surface's live modal/composite context;
         // this is a non-mutating action on the original node, not a graph patch.
         return api.blockRequest("ui-action", { method: "POST", body: JSON.stringify({
@@ -109,15 +109,15 @@ export function mountControls(root, api, context, config) {
     const active = Boolean(current?.active);
     const stopping = Boolean(current?.stopping);
     const unavailable = !readScope().available || Boolean(api.isReadOnly?.());
-    const message = current?.message || (unavailable ? "Lancez Run en Active Runtime pour activer le micro." : "Prêt à capturer le microphone.");
+    const message = current?.message || (unavailable ? "Start a Run in Active Runtime to enable the microphone." : "Ready to capture the microphone.");
     if (status && status.textContent !== message) { status.textContent = message; status.title = message; }
     if (toggle) {
-      const label = stopping ? "Arrêt…" : active ? "Arrêter" : "Démarrer";
+      const label = stopping ? "Stopping…" : active ? "Stop" : "Start";
       if (toggle.textContent !== label) toggle.textContent = label;
       toggle.classList.toggle("is-streaming", active);
       toggle.setAttribute("aria-pressed", String(active));
       toggle.disabled = stopping || (unavailable && !active);
-      toggle.title = unavailable ? message : active ? "Arrêter la capture du microphone" : "Démarrer la capture du microphone";
+      toggle.title = unavailable ? message : active ? "Stop the microphone capture" : "Start the microphone capture";
     }
     if (startButton) { startButton.disabled = active || unavailable; startButton.title = unavailable ? message : ""; }
     if (stopButton) stopButton.disabled = !active || stopping;
@@ -127,7 +127,7 @@ export function mountControls(root, api, context, config) {
     const current = record();
     if (!current?.streamer || current.stopping) return;
     current.stopping = true;
-    current.message = "Finalisation de la capture…";
+    current.message = "Finalizing the capture…";
     notify();
     void current.streamer.stop();
   };

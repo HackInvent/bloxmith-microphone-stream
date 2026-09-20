@@ -83,7 +83,7 @@ export function createStreamer(options = {}) {
     }
     const result = await options.api.applyAction("publish_capture_command", values);
     if (result?.error || result?.active_runtime_actions_result?.ok !== true) {
-      throw new Error(result?.error || "Publication de la commande micro non confirmée.");
+      throw new Error(result?.error || "The microphone command publication was not confirmed.");
     }
   }
 
@@ -99,7 +99,7 @@ export function createStreamer(options = {}) {
         // command carries counts so the receiver can wait for their delivery.
         session.publisher?.close?.();
         if (session.startAttempted) await publishCommand(session, "stop");
-        if (!session.failed) status("Micro arrêté · commande stop envoyée.");
+        if (!session.failed) status("Microphone stopped · stop command sent.");
       } catch (error) {
         report(session, error);
       } finally {
@@ -139,14 +139,14 @@ export function createStreamer(options = {}) {
     status("Autorisation du microphone...");
     try {
       if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
-        throw new Error("Capture MediaRecorder indisponible dans ce navigateur.");
+        throw new Error("MediaRecorder capture is unavailable in this browser.");
       }
       if (typeof options.api?.runtimeAudioStreams?.openOutput !== "function"
           || typeof options.api?.applyAction !== "function") {
-        throw new Error("Passerelle audio ou publication des commandes indisponible.");
+        throw new Error("The audio gateway or the command publication is unavailable.");
       }
       const profile = preferredRecorderProfile();
-      if (!profile) throw new Error("Ce navigateur ne peut pas enregistrer en Opus dans WebM ou Ogg. Utilisez un navigateur compatible.");
+      if (!profile) throw new Error("This browser cannot record Opus in WebM or Ogg. Use a browser compatible.");
       const raw = typeof options.config === "function" ? options.config() : {};
       const config = {
         timesliceMs: Math.max(100, Math.min(2000, Number(raw.timesliceMs) || 250)),
@@ -171,7 +171,7 @@ export function createStreamer(options = {}) {
         if (session.failed || session.closing || !event.data || event.data.size <= 0) return;
         try {
           if (!session.publisher.sendFrame(event.data)) {
-            throw new Error("Le tampon WebSocket est saturé ; la capture a été arrêtée.");
+            throw new Error("The WebSocket buffer is saturated; the capture was stopped.");
           }
           session.frames += 1;
           session.bytes += event.data.size;
@@ -181,15 +181,15 @@ export function createStreamer(options = {}) {
       });
       recorder.addEventListener("stop", () => void finish(session), { once: true });
       recorder.addEventListener("error", (event) => {
-        fail(session, event.error || new Error("MediaRecorder a signalé une erreur."));
+        fail(session, event.error || new Error("MediaRecorder reported an error."));
       });
-      status("Connexion aux ports audio_out et command_out...");
+      status("Connecting to the audio_out and command_out ports...");
       session.publisher = await options.api.runtimeAudioStreams.openOutput({
         outputPort: "audio_out", codec: profile.codec, sampleRateHz, channels,
         onState: (event) => {
           options.onTransportState?.(event);
           if (event.type === "runtime_audio_stream.closed" && !session.closing) {
-            fail(session, new Error("La connexion audio a été fermée."));
+            fail(session, new Error("The audio connection was closed."));
           }
         },
         onError: (error) => fail(session, error),
@@ -201,7 +201,7 @@ export function createStreamer(options = {}) {
       if (session.cancelled) return await finish(session);
       recorder.start(config.timesliceMs);
       session.starting = false;
-      status(`Micro diffusé (${profile.codec}, ${sampleRateHz} Hz, ${channels} canal/canaux).`);
+      status(`Microphone streaming (${profile.codec}, ${sampleRateHz} Hz, ${channels} channel(s)).`);
       session.timer = window.setTimeout(stop, config.maxDurationSec * 1000);
       options.onStart?.({ codec: profile.codec, sampleRateHz, channels });
     } catch (error) {

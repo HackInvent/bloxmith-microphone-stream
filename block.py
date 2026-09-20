@@ -140,7 +140,7 @@ class MicrophoneStreamBlock(BlockDefinition):
                 outputs = node.get("outputs") or node.get("ports", {}).get("outputs", [])
                 if not any(port.get("id") == 2 and port.get("name") == "command_out"
                            and port.get("transport", "message") == "message" for port in outputs):
-                    raise ValueError("Le port command_out manque : recréez le bloc avec son nouveau modèle.")
+                    raise ValueError("The command_out port is missing: recreate the block with its new model.")
             except (TypeError, ValueError) as exc:
                 return {"error": str(exc)}
             return {
@@ -200,14 +200,14 @@ class MicrophoneStreamBlock(BlockDefinition):
         config = self._config(context.config)
         metadata = {"microphone_stream": {"output_port": "audio_out", **config}}
         if context.runtime_mode != "zeromq_active":
-            message = "Capture micro disponible uniquement en Active Runtime."
+            message = "Microphone capture is only available in Active Runtime."
             return BlockRuntimeResult(
                 status="skipped",
                 outputs=[],
                 logs=[f"[microphone-stream] {context.node_id}: {message}"],
                 last_message=message,
                 content_type=TEXT_PLAIN,
-                worker_received="simulation sans flux audio",
+                worker_received="simulation without audio stream",
                 metadata=metadata,
             )
 
@@ -216,18 +216,18 @@ class MicrophoneStreamBlock(BlockDefinition):
         # Availability is part of the public audio interface in both host modes.
         connected = bool(getattr(client, "available", False))
         if not connected:
-            message = "Le port audio_out n'est pas relié à une entrée audio compatible."
+            message = "The audio_out port is not wired to a compatible audio input."
             return BlockRuntimeResult(
                 status="skipped",
                 outputs=[],
                 logs=[f"[microphone-stream] {context.node_id}: {message}"],
                 last_message=message,
                 content_type=TEXT_PLAIN,
-                worker_received="audio_out non connecté",
+                worker_received="audio_out not connected",
                 metadata=metadata,
             )
 
-        message = "Passerelle micro prête sur audio_out ; démarrez la capture depuis le bloc."
+        message = "Microphone gateway ready on audio_out; start the capture from the block."
         metadata["microphone_stream"]["connected"] = True
         return BlockRuntimeResult(
             status="success",
@@ -235,7 +235,7 @@ class MicrophoneStreamBlock(BlockDefinition):
             logs=[f"[microphone-stream] {context.node_id}: {message}"],
             last_message=message,
             content_type=TEXT_PLAIN,
-            worker_received="passerelle micro prête",
+            worker_received="microphone gateway ready",
             metadata=metadata,
         )
 
@@ -293,19 +293,19 @@ class MicrophoneStreamBlock(BlockDefinition):
         action = values.get("action")
         stream_id = values.get("stream_id")
         if not isinstance(action, str) or action not in {"start", "stop"}:
-            raise ValueError("Commande micro attendue : start ou stop.")
+            raise ValueError("Microphone command expected: start or stop.")
         if not isinstance(stream_id, str) or not stream_id.strip() or len(stream_id) > 128:
-            raise ValueError("Identifiant de flux micro invalide.")
+            raise ValueError("Invalid microphone stream identifier.")
         command = {"action": action, "stream_id": stream_id}
         if action == "stop":
             for key in ("frame_count", "byte_count"):
                 value = values.get(key)
                 if type(value) is not int or not 0 <= value <= 9_007_199_254_740_991:
-                    raise ValueError(f"Compteur micro invalide : {key}.")
+                    raise ValueError(f"Invalid microphone counter: {key}.")
                 command[key] = value
             aborted = values.get("aborted", False)
             if type(aborted) is not bool:
-                raise ValueError("Le champ aborted doit être booléen.")
+                raise ValueError("The aborted field must be a boolean.")
             command["aborted"] = aborted
         return command
 

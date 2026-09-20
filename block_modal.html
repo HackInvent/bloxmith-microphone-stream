@@ -5,20 +5,20 @@
       <h2 id="{{ node_id }}BlockModalTitle">{{ node_title }}</h2>
     </div>
     <div class="modal-actions">
-      <button class="ghost-btn" data-close-block-modal type="button">Fermer</button>
+      <button class="ghost-btn" data-close-block-modal type="button">Close</button>
     </div>
   </div>
 
   <div class="microphone-stream-modal-body">
     <section class="microphone-stream-section">
       <div class="ports-editor-header"><span class="group-label">Flux microphone</span></div>
-      <p class="inspector-copy">Reliez audio_out et command_out aux deux entrées du récepteur, puis Run en Active Runtime (sans Play). Le micro envoie start, les morceaux audio, puis stop avec les compteurs de fin.</p>
+      <p class="inspector-copy">Wire audio_out and command_out to the receiver's two inputs, then Run in Active Runtime (without Play). The microphone sends start, the audio chunks, then stop with the final counters.</p>
       <div class="microphone-stream-capture">
-        <button class="solid-btn" data-microphone-stream-start type="button">Démarrer le micro</button>
-        <button class="ghost-btn" data-microphone-stream-stop type="button" disabled>Arrêter</button>
+        <button class="solid-btn" data-microphone-stream-start type="button">Start the microphone</button>
+        <button class="ghost-btn" data-microphone-stream-stop type="button" disabled>Stop</button>
         <p class="inspector-copy microphone-stream-status" data-microphone-stream-status role="status" aria-live="polite">En attente d'une capture.</p>
       </div>
-      <p class="inspector-copy">La capture continue si vous fermez cette fenêtre ou naviguez dans un composite. Utilisez Arrêter pour couper le micro.</p>
+      <p class="inspector-copy">The capture keeps running if you close this window or navigate inside a composite. Use Stop to cut the microphone off.</p>
     </section>
 
     <section class="microphone-stream-section">
@@ -29,39 +29,39 @@
           <input id="{{ node_id }}MicTimeslice" data-block-config-field="timeslice_ms" data-block-value-type="integer" type="number" min="100" max="2000" step="50" value="{{ timeslice_ms }}" />
         </div>
         <div class="field-group">
-          <label for="{{ node_id }}MicBitrate">Débit cible (bits/s)</label>
+          <label for="{{ node_id }}MicBitrate">Target bitrate (bits/s)</label>
           <input id="{{ node_id }}MicBitrate" data-block-config-field="audio_bits_per_second" data-block-value-type="integer" type="number" min="16000" max="320000" step="1000" value="{{ audio_bits_per_second }}" />
         </div>
         <div class="field-group">
           <label for="{{ node_id }}MicChannels">Canaux</label>
           <select id="{{ node_id }}MicChannels" data-block-config-field="channel_count" data-block-value-type="integer">
             <option value="1" {{ channel_1_selected }}>Mono</option>
-            <option value="2" {{ channel_2_selected }}>Stéréo</option>
+            <option value="2" {{ channel_2_selected }}>Stereo</option>
           </select>
         </div>
         <div class="field-group">
-          <label for="{{ node_id }}MicDuration">Durée maximale (s)</label>
+          <label for="{{ node_id }}MicDuration">Maximum duration (s)</label>
           <input id="{{ node_id }}MicDuration" data-block-config-field="max_duration_sec" data-block-value-type="integer" type="number" min="1" max="86400" step="1" value="{{ max_duration_sec }}" />
         </div>
       </div>
     </section>
 
     <section class="microphone-stream-section">
-      <div class="ports-editor-header"><span class="group-label">Identité</span></div>
-      <div class="field-group"><label for="{{ node_id }}MicName">Nom du bloc</label><input id="{{ node_id }}MicName" data-block-title-field type="text" autocomplete="off" value="{{ node_title }}" /></div>
+      <div class="ports-editor-header"><span class="group-label">Identity</span></div>
+      <div class="field-group"><label for="{{ node_id }}MicName">Block name</label><input id="{{ node_id }}MicName" data-block-title-field type="text" autocomplete="off" value="{{ node_title }}" /></div>
     </section>
     <section class="microphone-stream-section">
       <div class="ports-editor-header"><span class="group-label">Ports audio et commandes</span></div>
       {{ ports_html }}
     </section>
     <section class="microphone-stream-section">
-      <div class="ports-editor-header"><span class="group-label">Dernier état</span></div>
+      <div class="ports-editor-header"><span class="group-label">Last state</span></div>
       {{ runtime_html }}
     </section>
     <section class="microphone-stream-section" data-block-modal-error-panel>{{ error_html }}</section>
   </div>
 
   <div class="modal-actions microphone-stream-footer">
-    <button class="solid-btn" data-block-apply type="button" disabled>Appliquer</button>
+    <button class="solid-btn" data-block-apply type="button" disabled>Apply</button>
   </div>
 </div>

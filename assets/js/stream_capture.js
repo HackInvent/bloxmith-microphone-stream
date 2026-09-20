@@ -195,7 +195,7 @@ export function createStreamer(options = {}) {
         onError: (error) => fail(session, error),
       });
       if (session.cancelled) return await finish(session);
-      if (!session.publisher.descriptor?.stream_id) throw new Error("Identifiant de flux indisponible.");
+      if (!session.publisher.descriptor?.stream_id) throw new Error("Stream identifier unavailable.");
       session.startAttempted = true;
       await publishCommand(session, "start");
       if (session.cancelled) return await finish(session);

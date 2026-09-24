@@ -1,4 +1,4 @@
-<div class="modal-panel cw-microphone-stream-modal" role="dialog" aria-modal="true" aria-labelledby="{{ node_id }}BlockModalTitle" data-generic-block-modal-root data-block-runtime-refresh="autonomous" data-node-id="{{ node_id }}" data-node-kind="{{ node_kind }}">
+<div data-properties-surface="modal" class="modal-panel cw-microphone-stream-modal" role="dialog" aria-modal="true" aria-labelledby="{{ node_id }}BlockModalTitle" data-generic-block-modal-root data-block-runtime-refresh="autonomous" data-node-id="{{ node_id }}" data-node-kind="{{ node_kind }}">
   <div class="modal-header">
     <div>
       <span class="panel-kicker">Bloc {{ node_kind_title }}</span>
@@ -23,6 +23,10 @@
 
     <section class="microphone-stream-section">
       <div class="ports-editor-header"><span class="group-label">Encodage navigateur</span></div>
+      <div class="field-group">
+        <label for="{{ node_id }}MicContinuous"><input id="{{ node_id }}MicContinuous" data-block-config-field="continuous_capture" data-block-value-type="boolean" type="checkbox" aria-describedby="{{ node_id }}MicContinuousHelp" {{ continuous_checked }} /> Continuous capture</label>
+        <p class="inspector-copy" id="{{ node_id }}MicContinuousHelp">No timed stop. Capture continues until you stop the microphone or the Run. Applies to the next capture; downstream limits and API charges still apply.</p>
+      </div>
       <div class="field-grid">
         <div class="field-group">
           <label for="{{ node_id }}MicTimeslice">Taille d'un morceau (ms)</label>
@@ -39,8 +43,8 @@
             <option value="2" {{ channel_2_selected }}>Stereo</option>
           </select>
         </div>
-        <div class="field-group">
-          <label for="{{ node_id }}MicDuration">Maximum duration (s)</label>
+        <div class="field-group" data-microphone-duration {{ duration_hidden }}>
+          <label for="{{ node_id }}MicDuration">Stop capture after (s)</label>
           <input id="{{ node_id }}MicDuration" data-block-config-field="max_duration_sec" data-block-value-type="integer" type="number" min="1" max="86400" step="1" value="{{ max_duration_sec }}" />
         </div>
       </div>

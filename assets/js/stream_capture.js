@@ -153,6 +153,7 @@ export function createStreamer(options = {}) {
         audioBitsPerSecond: Math.max(16000, Math.min(320000, Number(raw.audioBitsPerSecond) || 128000)),
         channelCount: Number(raw.channelCount) === 2 ? 2 : 1,
         maxDurationSec: Math.max(1, Math.min(86400, Number(raw.maxDurationSec) || 3600)),
+        continuousCapture: raw.continuousCapture === true,
       };
       session.stream = await navigator.mediaDevices.getUserMedia({
         audio: { channelCount: { ideal: config.channelCount }, sampleRate: { ideal: 48000 } },
@@ -202,7 +203,9 @@ export function createStreamer(options = {}) {
       recorder.start(config.timesliceMs);
       session.starting = false;
       status(`Microphone streaming (${profile.codec}, ${sampleRateHz} Hz, ${channels} channel(s)).`);
-      session.timer = window.setTimeout(stop, config.maxDurationSec * 1000);
+      if (!config.continuousCapture) {
+        session.timer = window.setTimeout(stop, config.maxDurationSec * 1000);
+      }
       options.onStart?.({ codec: profile.codec, sampleRateHz, channels });
     } catch (error) {
       report(session, error);

@@ -206,6 +206,10 @@ def test_model_preparation_and_direct_execution() -> None:
     expect(normalized["audio_bits_per_second"] == 320_000, "Bitrate must be bounded.")
     expect(normalized["channel_count"] == 2, "Channel count must stay mono or stereo.")
     expect(normalized["max_duration_sec"] == 1, "Capture duration must stay positive.")
+    expect(block._config({})["continuous_capture"] is False, "FB9: preserve timed capture for existing blueprints.")
+    expect(block._config({"continuous_capture": True})["continuous_capture"] is True, "FB9: explicit continuous mode.")
+    for invalid in ("true", 1, None):
+        expect(block._config({"continuous_capture": invalid})["continuous_capture"] is False, "FB9: require a real boolean.")
 
     for action in ("start", "stop"):
         response = block.handle_ui_action(
@@ -302,11 +306,16 @@ def test_graph_modes() -> None:
 
 
 def test_browser_command_lifecycle() -> None:
-    """FB1/FB2/FB3/FB7: execute browser code with deterministic capture and transport fakes."""
+    """FB1/FB2/FB3/FB7/FB9: deterministic capture, finite/continuous timers, transport and cleanup."""
     script = r"""
 import assert from "node:assert/strict";
 import { pathToFileURL } from "node:url";
-global.window = { setTimeout: () => 1, clearTimeout() {}, addEventListener() {} };
+const timers = new Map();
+let timerId = 0;
+global.window = {
+  setTimeout: (fn, delay) => { timers.set(++timerId, { fn, delay }); return timerId; },
+  clearTimeout(id) { timers.delete(id); }, addEventListener() {},
+};
 let deny = false, holdPermission = null, released = 0, started = 0;
 const stream = {
   getTracks: () => [{ stop: () => released++ }],
@@ -411,6 +420,29 @@ const settle = () => new Promise(resolve => setTimeout(resolve, 0));
   assert.equal(commands.at(-1).action, "stop");
   assert.ok(!mounted.isActive());
 
+  // FB9: continuous capture has no automatic deadline; explicit Stop still drains.
+  assert.equal(timers.size, 0);
+  const continuous = createStreamer({ api, config: () => ({ continuousCapture: true, maxDurationSec: 1 }) });
+  await continuous.start();
+  const liveRecorder = Recorder.last;
+  assert.equal(timers.size, 0, "Continuous capture must not schedule a duration stop.");
+  assert.equal(liveRecorder.state, "recording");
+  Recorder.last.emit("dataavailable", { data: new Blob(["after-one-hour"]) });
+  await continuous.stop();
+  assert.equal(commands.at(-1).aborted, false);
+  assert.equal(commands.at(-1).frame_count, 2);
+  assert.ok(!continuous.isActive() && publishers.at(-1).closed);
+  for (const value of [false, undefined, "true", 1]) {
+    const timed = createStreamer({ api, config: () => ({ continuousCapture: value, maxDurationSec: 2 }) });
+    await timed.start();
+    assert.equal(timers.size, 1, "Only an explicit boolean true disables the safety timer.");
+    const timer = [...timers.values()][0];
+    assert.equal(timer.delay, 2000);
+    await timer.fn();
+    assert.ok(!timed.isActive() && publishers.at(-1).closed);
+    assert.equal(commands.at(-1).aborted, false);
+  }
+
   Recorder.isTypeSupported = mime => mime === "audio/ogg;codecs=opus";
   const ogg = createStreamer({ api, config: () => ({ channelCount: 2 }) });
   await ogg.start();
@@ -426,9 +458,12 @@ const settle = () => new Promise(resolve => setTimeout(resolve, 0));
   const { update } = await import(pathToFileURL(process.argv[3]));
   const root = { dataset: {}, querySelector: () => ({ textContent: "" }) };
   update(root, {
-    getNode: () => ({ title: "Live", config: { timeslice_ms: 333 } }),
+    getNode: () => ({ title: "Live", config: { timeslice_ms: 333, continuous_capture: true } }),
   });
   assert.equal(root.dataset.timesliceMs, "333");
+  assert.equal(root.dataset.continuousCapture, "true");
+  update(root, { getNode: () => ({ config: { continuous_capture: false } }) });
+  assert.equal(root.dataset.continuousCapture, "false");
   console.log("[ok] microphone browser start/audio/stop lifecycle");
 })().catch(error => { console.error(error); process.exitCode = 1; });
 """

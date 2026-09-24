@@ -39,6 +39,7 @@ DEFAULT_MAX_DURATION_SEC = 3_600
 # FB6 - Render block-owned node-card, modal, inspector, and capture assets.
 # FB7 - Publish explicit start/stop JSON commands on command_out, never through the audio transport.
 # FB8 - Share one run-scoped capture across cards/modals and composite navigation, with lifecycle cleanup.
+# FB9 - Offer explicit continuous capture without changing bounded-capture defaults or stop semantics.
 class MicrophoneStreamBlock(BlockDefinition):
     """Expose one browser microphone as a continuous graph audio stream.
 
@@ -70,6 +71,7 @@ class MicrophoneStreamBlock(BlockDefinition):
                 "audio_bits_per_second": str(config["audio_bits_per_second"]),
                 "channel_count": str(config["channel_count"]),
                 "max_duration_sec": str(config["max_duration_sec"]),
+                "continuous_capture": str(config["continuous_capture"]).lower(),
                 "profile": f"{config['channel_count']} canal · {config['audio_bits_per_second'] // 1000} kb/s",
             },
         )
@@ -239,7 +241,7 @@ class MicrophoneStreamBlock(BlockDefinition):
             metadata=metadata,
         )
 
-    def _config(self, raw_config: Mapping[str, Any] | None) -> dict[str, int]:
+    def _config(self, raw_config: Mapping[str, Any] | None) -> dict[str, int | bool]:
         """Return bounded browser-capture settings from untrusted node config."""
 
         source = raw_config if isinstance(raw_config, Mapping) else {}
@@ -258,6 +260,7 @@ class MicrophoneStreamBlock(BlockDefinition):
             "max_duration_sec": self._bounded_int(
                 source.get("max_duration_sec"), DEFAULT_MAX_DURATION_SEC, 1, 86_400
             ),
+            "continuous_capture": source.get("continuous_capture") is True,
         }
 
     @staticmethod
@@ -271,7 +274,7 @@ class MicrophoneStreamBlock(BlockDefinition):
         return max(minimum, min(maximum, parsed))
 
     @staticmethod
-    def _ui_replacements(config: Mapping[str, int]) -> dict[str, str]:
+    def _ui_replacements(config: Mapping[str, int | bool]) -> dict[str, str]:
         """Build escaped template values for modal and inspector settings."""
 
         return {
@@ -281,6 +284,8 @@ class MicrophoneStreamBlock(BlockDefinition):
             "channel_1_selected": "selected" if config["channel_count"] == 1 else "",
             "channel_2_selected": "selected" if config["channel_count"] == 2 else "",
             "max_duration_sec": str(config["max_duration_sec"]),
+            "continuous_checked": "checked" if config["continuous_capture"] else "",
+            "duration_hidden": "hidden" if config["continuous_capture"] else "",
         }
 
     @staticmethod

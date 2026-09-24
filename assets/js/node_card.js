@@ -22,6 +22,7 @@ export function update(root, api) {
   for (const [key, field] of Object.entries({
     timesliceMs: "timeslice_ms", audioBitsPerSecond: "audio_bits_per_second",
     channelCount: "channel_count", maxDurationSec: "max_duration_sec",
+    continuousCapture: "continuous_capture",
   })) {
     if (config[field] != null) root.dataset[key] = String(config[field]);
   }
@@ -45,6 +46,7 @@ export function mount(root, api, context = {}) {
     audioBitsPerSecond: Number(root.dataset.audioBitsPerSecond) || 128000,
     channelCount: Number(root.dataset.channelCount) || 1,
     maxDurationSec: Number(root.dataset.maxDurationSec) || 3600,
+    continuousCapture: root.dataset.continuousCapture === "true",
   }));
   for (const eventName of ["pointerdown", "pointerup", "mousedown", "mouseup", "dblclick", "contextmenu"]) {
     button.addEventListener(eventName, isolateControl);

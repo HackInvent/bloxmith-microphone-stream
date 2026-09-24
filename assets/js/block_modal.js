@@ -1,3 +1,5 @@
+import { withProperties } from "./properties.js";
+
 /**
  * Role: Mounts Microphone Stream modal capture controls.
  * File Name: block_modal.js
@@ -7,6 +9,7 @@
 
 
 import { mountControls } from "./common.js";
+import { mountCaptureSettings } from "./capture_settings.js";
 
 /**
  * Read one numeric generic config input from the mounted modal.
@@ -29,11 +32,19 @@ function numberField(root, name, fallback) {
  * @param {object} context - Block-owned capture node snapshot.
  * @returns {Function} UI-only cleanup; capture remains attached to its Run.
  */
-export function mount(root, api, context = {}) {
-  return mountControls(root, api, context, () => ({
+function mountOwned(root, api, context = {}) {
+  const detachSettings = mountCaptureSettings(root);
+  const detachControls = mountControls(root, api, context, () => ({
     timesliceMs: numberField(root, "timeslice_ms", 250),
     audioBitsPerSecond: numberField(root, "audio_bits_per_second", 128000),
     channelCount: numberField(root, "channel_count", 1),
     maxDurationSec: numberField(root, "max_duration_sec", 3600),
+    continuousCapture: root.querySelector('[data-block-config-field="continuous_capture"]')?.checked === true,
   }));
+  return () => { detachControls?.(); detachSettings(); };
+}
+
+/** Keep the block behavior and add properties-only accessibility. */
+export function mount(root, ...args) {
+  return withProperties(mountOwned).call(this, root, ...args);
 }

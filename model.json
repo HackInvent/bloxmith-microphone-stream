@@ -1,7 +1,9 @@
 {
   "kind": "microphone_stream",
   "version": "0.1.1",
-  "bloxsmith_compatibility": ["1.0.9"],
+  "bloxsmith_compatibility": [
+    "1.0.9"
+  ],
   "tested_with_bloxsmith": "1.0.9",
   "title": "Microphone Stream",
   "ui_assets": {
@@ -21,12 +23,40 @@
       {
         "kind": "js",
         "path": "assets/js/block_modal.js"
+      },
+      {
+        "kind": "js",
+        "path": "assets/js/capture_settings.js"
+      },
+      {
+        "kind": "css",
+        "path": "assets/css/properties.css"
+      },
+      {
+        "kind": "js",
+        "path": "assets/js/properties.js"
       }
     ],
     "inspector_panel": [
       {
         "kind": "css",
         "path": "assets/css/block_ui.css"
+      },
+      {
+        "kind": "js",
+        "path": "assets/js/properties_mount.js"
+      },
+      {
+        "kind": "js",
+        "path": "assets/js/capture_settings.js"
+      },
+      {
+        "kind": "css",
+        "path": "assets/css/properties.css"
+      },
+      {
+        "kind": "js",
+        "path": "assets/js/properties.js"
       }
     ],
     "node_card": [
@@ -64,7 +94,9 @@
           "codecs": [
             "opus"
           ],
-          "sample_rates_hz": [48000],
+          "sample_rates_hz": [
+            48000
+          ],
           "channels": [
             1,
             2
@@ -76,7 +108,9 @@
         "id": 2,
         "name": "command_out",
         "title": "Command out",
-        "emits": ["application/json"],
+        "emits": [
+          "application/json"
+        ],
         "multiplicity": "many",
         "transport": "message"
       }
@@ -86,7 +120,8 @@
     "timeslice_ms": 250,
     "audio_bits_per_second": 128000,
     "channel_count": 1,
-    "max_duration_sec": 3600
+    "max_duration_sec": 3600,
+    "continuous_capture": false
   },
   "port_capabilities": {
     "can_add_inputs": false,

@@ -72,6 +72,18 @@
 
 [data-block-release="microphone_stream@0.1.1"] .cw-microphone-stream-modal .inspector-copy { margin: 0; }
 [data-block-release="microphone_stream@0.1.1"] .cw-microphone-stream-modal .field-group :is(input, select) { width: 100%; min-width: 0; }
+[data-block-release="microphone_stream@0.1.1"] :is(.cw-microphone-stream-modal, .cw-microphone-stream-inspector) [data-microphone-duration][hidden] { display: none !important; }
+[data-block-release="microphone_stream@0.1.1"] :is(.cw-microphone-stream-modal, .cw-microphone-stream-inspector) label:has([data-block-config-field="continuous_capture"]) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+[data-block-release="microphone_stream@0.1.1"] :is(.cw-microphone-stream-modal, .cw-microphone-stream-inspector) input[data-block-config-field="continuous_capture"] {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  margin: 0;
+}
 [data-block-release="microphone_stream@0.1.1"] .cw-microphone-stream-modal .block-modal-error-tabs,
 [data-block-release="microphone_stream@0.1.1"] .cw-microphone-stream-modal .block-modal-error-panel { padding-inline: 0; background: transparent; }
 

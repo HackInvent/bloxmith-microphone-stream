@@ -1,4 +1,4 @@
-<div class="cw-block-inspector cw-microphone-stream-inspector" data-block-inspector-root data-microphone-stream-inspector-root data-node-id="{{ node_id }}" data-node-type="{{ node_type }}">
+<div data-properties-surface="inspector" class="cw-block-inspector cw-microphone-stream-inspector" data-block-inspector-root data-microphone-stream-inspector-root data-node-id="{{ node_id }}" data-node-type="{{ node_type }}">
   <div class="inspector-selection {{ summary_hidden }}" data-node-type="{{ node_type }}">
     <div class="inspector-node-card">
       <div class="inspector-node-icon">{{ node_icon }}</div>
@@ -32,7 +32,11 @@
       </select>
     </div>
     <div class="field-group">
-      <label>Maximum duration (s)</label>
+      <label for="{{ node_id }}InspectorMicContinuous"><input id="{{ node_id }}InspectorMicContinuous" data-block-config-field="continuous_capture" data-block-value-type="boolean" type="checkbox" aria-describedby="{{ node_id }}InspectorMicContinuousHelp" {{ continuous_checked }} /> Continuous capture</label>
+      <p class="inspector-copy" id="{{ node_id }}InspectorMicContinuousHelp">No timed stop. Stop the microphone or the Run to finish. Applies to the next capture; downstream limits and API charges still apply.</p>
+    </div>
+    <div class="field-group" data-microphone-duration {{ duration_hidden }}>
+      <label>Stop capture after (s)</label>
       <input data-block-config-field="max_duration_sec" data-block-value-type="integer" type="number" min="1" max="86400" step="1" value="{{ max_duration_sec }}" />
     </div>
     <p class="inspector-copy">After Run in Active Runtime, start the microphone from its card or its modal. Wire audio_out for the sound and command_out for start/stop. Play is not required.</p>

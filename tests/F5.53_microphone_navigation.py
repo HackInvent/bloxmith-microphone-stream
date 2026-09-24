@@ -137,6 +137,10 @@ def test_navigation(page, server, *, origin="managed") -> None:
 
     # A modal-started session must use its original node even after that modal is destroyed.
     modal = open_modal()
+    # FB9: continuous mode survives both its otherwise one-second deadline and navigation.
+    modal.locator('[data-block-config-field="max_duration_sec"]').fill("1")
+    modal.locator('[data-block-config-field="continuous_capture"]').check()
+    assert modal.locator('[data-microphone-duration]').is_hidden()
     modal.locator('[data-microphone-stream-start]').click()
     recording()
     second_stream = commands[-1]["values"]["stream_id"]
@@ -144,7 +148,7 @@ def test_navigation(page, server, *, origin="managed") -> None:
     enter()
     other = open_modal("inner-mic")
     frames_before = page.evaluate("window.micTest.frames")
-    page.wait_for_function("before => window.micTest.frames >= before + 2", arg=frames_before)
+    page.wait_for_function("before => window.micTest.frames >= before + 6", arg=frames_before)
     other.locator('[data-close-block-modal]').click()
     leave()
     card().click()
@@ -220,6 +224,18 @@ def test_navigation(page, server, *, origin="managed") -> None:
     assert card().is_disabled()
 
     modal = open_modal()
+    continuous = modal.locator('[data-block-config-field="continuous_capture"]')
+    assert not continuous.is_checked(), "An unapplied capture draft must not change persisted settings."
+    modal.locator('[data-block-config-field="max_duration_sec"]').fill("0")
+    continuous.check()
+    assert modal.locator('[data-microphone-duration]').is_hidden()
+    assert modal.locator('[data-block-config-field="max_duration_sec"]').evaluate("input => !input.willValidate")
+    modal.locator('[data-block-apply]').click()
+    page.wait_for_function("state.nodes.get('root-mic')?.config.continuous_capture === true")
+    modal.locator('[data-close-block-modal]').click()
+    modal = open_modal()
+    assert modal.locator('[data-block-config-field="continuous_capture"]').is_checked()
+    assert modal.locator('[data-microphone-duration]').is_hidden()
     for width, height, label in ((1440, 900, "desktop"), (390, 740, "mobile"), (320, 568, "small")):
         page.set_viewport_size({"width": width, "height": height})
         page.wait_for_timeout(250)
@@ -233,6 +249,27 @@ def test_navigation(page, server, *, origin="managed") -> None:
         }""")
         page.screenshot(path=artifact_path(f"microphone-{origin}-navigation-{label}.png"))
         assert bounds["inside"] and bounds["apply"] and bounds["close"] and not bounds["overflow"], (label, bounds)
+        option = modal.locator('[data-block-config-field="continuous_capture"]')
+        option.scroll_into_view_if_needed()
+        assert option.is_visible() and option.bounding_box()["width"] <= 24
+        page.screenshot(path=artifact_path(f"microphone-{origin}-continuous-{label}.png"))
+    page.set_viewport_size({"width": 1440, "height": 900})
+    modal.locator('[data-close-block-modal]').click()
+    page.locator('.canvas-node[data-node-id="root-mic"] h3').click()
+    # Node selection opens a non-interactive peek; pin the inspector through its actual UI.
+    if page.locator('#pinInspectorButton').get_attribute('aria-pressed') != 'true':
+        page.locator('#pinInspectorButton').click()
+    inspector = page.locator('.cw-microphone-stream-inspector')
+    inspector.wait_for(state="visible")
+    assert inspector.locator('[data-block-config-field="continuous_capture"]').is_checked()
+    inspector.locator('[data-block-config-field="continuous_capture"]').uncheck()
+    assert inspector.locator('[data-microphone-duration]').is_visible()
+    inspector.locator('[data-block-config-field="max_duration_sec"]').fill("120")
+    inspector.locator('[data-block-apply]').click()
+    page.wait_for_function("state.nodes.get('root-mic')?.config.continuous_capture === false && state.nodes.get('root-mic')?.config.max_duration_sec === 120")
+    modal = open_modal()
+    assert not modal.locator('[data-block-config-field="continuous_capture"]').is_checked()
+    assert modal.locator('[data-block-config-field="max_duration_sec"]').input_value() == "120"
     run = http_json(server.base_url, f"/api/runs/{run_id}")
     assert run.get("status") == "cancelled"
     assert len([command for command in commands if command["values"]["action"] == "start"]) == 6

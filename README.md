@@ -47,9 +47,19 @@ Capture/transport errors send `stop` with `aborted: true` when possible and rele
 | `timeslice_ms` | 250 | 100–2,000 ms requested MediaRecorder interval |
 | `audio_bits_per_second` | 128,000 | 16,000–320,000 bits/s |
 | `channel_count` | See `model.json` | Mono or stereo |
-| `max_duration_sec` | 3,600 | 1–86,400 seconds |
+| `continuous_capture` | `false` | Explicitly enable untimed capture until manual/Run stop |
+| `max_duration_sec` | 3,600 | 1–86,400 seconds; timed capture only |
 
 Encoding settings are read at capture start; they do not reconfigure an active stream. Apply saves settings; closing properties does not stop capture. The modal separates capture controls from settings, explains why Start is unavailable without a Run, and keeps Close/Apply outside its scrolling area even on mobile.
+
+For long conversations, enable **Continuous capture** in the modal or inspector,
+apply, then start the microphone. The timed-stop field is hidden while continuous
+mode is selected; its value is retained for later timed captures. Existing
+blueprints remain timed unless this option is explicitly enabled. Only the
+duration timer is disabled: buffer limits, error handling and lifecycle cleanup
+remain active. Closing properties or entering a composite never renews or
+restarts MediaRecorder. Stop still sends the final frame/byte counts for the same
+`stream_id`. Downstream blocks keep their own limits; OpenAI usage remains billed.
 
 The block explicitly requests WebM/Opus, falling back to Ogg/Opus. MP4/AAC and generic MIME types without a guaranteed codec are not used. If MediaRecorder supports neither Opus format, the block requests a compatible browser **before** opening the microphone or publishing start. It neither transcodes nor replays chunks.
 
@@ -84,7 +94,7 @@ the node version. There is no legacy unversioned UI fallback.
 - Active Runtime capture is UI-driven, without Play. One capture is shared by the card and properties for a given block, Run and browser.
 - Entering/leaving a composite, refreshing a card or closing properties **does not stop the microphone**. MediaRecorder, WebSocket and `stream_id` remain the same. Returning controls show actual capture state and can stop it; opening properties does not start another microphone. This also applies to a microphone inside a composite.
 - Simulation returns `skipped`, without microphone access or publication.
-- Manual stop, maximum duration, errors, Run stop/pause/change, blueprint change or page closure release tracks and the bridge. Surface unmount only removes UI subscriptions. A new Run or page never automatically restarts capture.
+- Manual stop, maximum duration in timed mode, errors, Run stop/pause/change, blueprint change or page closure release tracks and the bridge. Surface unmount only removes UI subscriptions. A new Run or page never automatically restarts capture.
 - Commands retain their originating block context even when another modal opens. Lifecycle checks use the local public Run context, without network polling; bridge closure stops capture.
 - Abrupt page or Run closure cannot guarantee final `stop` delivery. Stop the microphone first and check Save Audio.
 - The WebSocket buffer is bounded. Saturation stops capture and marks it incomplete.
@@ -101,8 +111,21 @@ Captures go to ignored results without personal paths. The suites cover both mod
 
 `F5.53_microphone_navigation.py` installs the current package and uses real Chromium, MediaRecorder, the bridge and Save Audio with a synthetic microphone. It tests composite navigation, capture inside composites, shared card/modal controls, saved counts, off-screen duration limits, cancelled late permission, new Runs, page exit and stopping a Run while the microphone is out of view. Properties are checked on desktop and narrow screens. `F5.54_microphone_linked_navigation.py` repeats the same assertions using a linked package. `F5.44` also exercises the installed package in both runtime modes and imports the actual capture ES module for deterministic lifecycle checks. The TTS suite covers all six shared-format source/consumer connections.
 
+Continuous-mode tests check the absence of an automatic timer, manual stop and
+final counters, strict boolean opt-in, default timed behavior, capture past its
+otherwise scheduled deadline while navigating, and settings persistence/reopening.
+
 ## Compatibility policy
 
 [compatibility.json](compatibility.json) records HackInvent's verified BloxSmith versions and test evidence. The outer harness is a **bundled-block test installation**; the release-specific suites described above additionally install and link this package through the real framework. Evidence covers those explicit cases, not every distribution format, browser/OS or live provider. Other framework versions are unverified, not necessarily incompatible.
 
 The block-version badge follows `model.json`, not a published Git tag. `unversioned` means that no block release version is declared; no number is inferred from the framework version. The framework still uses `model.json` for its runtime/install contract; the tester-owned JSON does not replace it. Official integration tests run in the private `bloxmith-blocs` workspace. Test helpers and the proprietary framework are not bundled in this public block repository.
+
+## Properties ergonomics
+
+Modal and inspector styles are owned by this package and scoped to its exact
+release. Forms adapt to narrow panels, checkboxes stay beside their labels, and
+long values do not widen the inspector. Existing labels are associated with
+controls; keyboard navigation complements the block’s own tab handlers.
+These presentation helpers do not change port bindings, authored settings,
+runtime behavior or the block’s original surface cleanup.
